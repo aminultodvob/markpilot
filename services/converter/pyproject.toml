@@ -1,0 +1,74 @@
+[project]
+name = "markpilot-converter"
+version = "1.0.0"
+description = "Document to Markdown conversion service built on Microsoft MarkItDown, with an OCR pipeline for scanned pages."
+requires-python = ">=3.10"
+license = { text = "MIT" }
+
+dependencies = [
+    # Conversion engine. Pinned exactly: the adapter is verified against this
+    # version's API, and its converter set determines what we support.
+    "markitdown[all]==0.1.7",
+
+    # Web layer.
+    "fastapi==0.115.6",
+    "uvicorn[standard]==0.34.0",
+    "python-multipart==0.0.20",
+    "pydantic-settings==2.7.1",
+
+    # OCR. pypdfium2 rasterises PDF pages (Apache-2.0/BSD-3, self-contained
+    # wheel - chosen over AGPL PyMuPDF and over pdf2image, which needs a
+    # separate Poppler install). pytesseract drives the Tesseract binary.
+    "pytesseract==0.3.13",
+    "pypdfium2>=5.9.0",
+    "pillow>=12.2.0",
+    "numpy>=2.2.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest==8.3.4",
+    "pytest-asyncio==0.25.2",
+    "httpx==0.28.1",
+    "ruff==0.9.2",
+    "mypy==1.14.1",
+
+    # Fixture generation only. reportlab and python-docx author test documents;
+    # uharfbuzz and freetype-py shape and rasterise Bengali text correctly,
+    # which Pillow cannot do unless it was built against libraqm.
+    "reportlab==4.2.5",
+    "python-docx==1.1.2",
+    "uharfbuzz>=0.56.0",
+    "freetype-py>=2.5.1",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-q --strict-markers"
+asyncio_default_fixture_loop_scope = "function"
+markers = [
+    "ocr: requires a working Tesseract installation",
+    "slow: takes more than a couple of seconds",
+]
+filterwarnings = ["ignore::RuntimeWarning:pydub.utils"]
+
+[tool.ruff]
+line-length = 90
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "C4", "SIM"]
+ignore = [
+    "B008",  # FastAPI's Depends()/File() in defaults is the documented pattern.
+    "E501",  # Long lines are caught by the formatter, not the linter.
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["E402"]
+
+[tool.mypy]
+python_version = "3.10"
+warn_unused_configs = true
+ignore_missing_imports = true
+check_untyped_defs = true

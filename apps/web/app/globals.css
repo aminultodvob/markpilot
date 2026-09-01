@@ -1,0 +1,456 @@
+@import "tailwindcss";
+
+/*
+ * MarkPilot design system.
+ *
+ * The product is a reading tool: people come here to look at a document and
+ * decide whether the conversion is good. So the interface is built like paper,
+ * not like a dashboard - warm neutrals instead of blue-greys, generous
+ * whitespace, a single quiet accent, and chrome that recedes behind content.
+ *
+ * Light and dark are two authored palettes, not one inverted. Dark keeps the
+ * warmth (a near-black with brown in it, never blue) and lifts the accent so
+ * it holds contrast without glowing.
+ */
+
+@theme {
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-serif: var(--font-serif-display), ui-serif, Georgia, Cambria,
+    "Times New Roman", serif;
+  --font-mono: var(--font-mono-code), ui-monospace, "SF Mono", Menlo, Consolas,
+    "Liberation Mono", monospace;
+  /* Bengali needs an explicit fallback chain: OCR output is routinely বাংলা. */
+  --font-bengali: "Noto Sans Bengali", "Nirmala UI", "Shonar Bangla",
+    "Vrinda", sans-serif;
+
+  --radius-card: 1rem;
+  --radius-control: 0.625rem;
+  --radius-pill: 999px;
+}
+
+@layer base {
+  :root {
+    color-scheme: light;
+
+    /* Warm paper, not clinical white. */
+    --bg: #fbfaf8;
+    --bg-subtle: #f5f3ef;
+    --surface: #ffffff;
+    --surface-raised: #ffffff;
+    --surface-sunken: #f2efea;
+
+    --border: #e9e4dc;
+    --border-strong: #d8d1c6;
+
+    --text: #21201c;
+    --text-secondary: #57534e;
+    --text-muted: #726c64;
+    --text-faint: #857f77;
+
+    /*
+     * One accent, warm clay. Tuned so it clears WCAG AA (4.5:1) against every
+     * surface it lands on - page, card and sunken - and so white label text on
+     * the accent itself clears it too. A lighter, prettier clay failed all
+     * three, and accent text here is real content: links in the reading view.
+     */
+    --accent: #b04e2c;
+    --accent-hover: #9c4020;
+    --accent-contrast: #ffffff;
+    --accent-subtle: #fbf0ea;
+    --accent-border: #f0d4c5;
+
+    --success: #4b7a4e;
+    --success-subtle: #eef4ed;
+    --warning: #9a6a24;
+    --warning-subtle: #fbf3e6;
+    --danger: #a94a3c;
+    --danger-subtle: #fbeeec;
+
+    /* Warm-tinted shadows; a neutral grey shadow reads cold on warm paper. */
+    --shadow-soft: 0 1px 2px rgb(60 45 30 / 0.04), 0 1px 3px rgb(60 45 30 / 0.05);
+    --shadow-lift: 0 2px 4px rgb(60 45 30 / 0.04), 0 8px 20px rgb(60 45 30 / 0.07);
+    --shadow-float: 0 12px 32px rgb(60 45 30 / 0.10), 0 2px 8px rgb(60 45 30 / 0.05);
+  }
+
+  .dark {
+    color-scheme: dark;
+
+    /* Near-black with brown in it, so the warmth survives the theme switch. */
+    --bg: #171614;
+    --bg-subtle: #1c1b18;
+    --surface: #201f1c;
+    --surface-raised: #272521;
+    --surface-sunken: #1a1917;
+
+    --border: #322f2a;
+    --border-strong: #453f38;
+
+    --text: #f5f2ed;
+    --text-secondary: #c9c3ba;
+    --text-muted: #9a938a;
+    --text-faint: #6f685f;
+
+    --accent: #e08a63;
+    --accent-hover: #eda383;
+    --accent-contrast: #24160f;
+    --accent-subtle: #2b211b;
+    --accent-border: #4a3628;
+
+    --success: #86b989;
+    --success-subtle: #1d271e;
+    --warning: #d9a441;
+    --warning-subtle: #2a2113;
+    --danger: #e08b7e;
+    --danger-subtle: #2b1a17;
+
+    --shadow-soft: 0 1px 2px rgb(0 0 0 / 0.35);
+    --shadow-lift: 0 2px 6px rgb(0 0 0 / 0.4), 0 10px 24px rgb(0 0 0 / 0.35);
+    --shadow-float: 0 16px 40px rgb(0 0 0 / 0.55);
+  }
+
+  * {
+    border-color: var(--border);
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+
+  /* One focus ring everywhere, meeting WCAG 2.2 focus appearance. */
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+
+  ::selection {
+    background-color: var(--accent-subtle);
+    color: var(--text);
+  }
+
+  /* Slim, unobtrusive scrollbars that match the surface. */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-strong) transparent;
+  }
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background-color: var(--border-strong);
+    border-radius: 999px;
+    border: 3px solid transparent;
+    background-clip: content-box;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: var(--text-faint);
+    background-clip: content-box;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@layer components {
+  /*
+   * Reading view.
+   *
+   * Sized for sustained reading rather than for matching the app chrome: a
+   * serif face, a measure of roughly 68 characters, and leading loose enough
+   * that a long OCR paragraph stays comfortable.
+   */
+  .reading {
+    font-family: var(--font-serif);
+    font-size: 1.0625rem;
+    line-height: 1.75;
+    color: var(--text);
+    overflow-wrap: break-word;
+    max-width: 68ch;
+    margin-inline: auto;
+  }
+
+  .reading:lang(bn),
+  .reading [lang="bn"] {
+    font-family: var(--font-bengali);
+  }
+
+  .reading > *:first-child {
+    margin-top: 0;
+  }
+
+  .reading h1,
+  .reading h2,
+  .reading h3,
+  .reading h4,
+  .reading h5,
+  .reading h6 {
+    font-family: var(--font-serif);
+    font-weight: 600;
+    line-height: 1.25;
+    letter-spacing: -0.012em;
+    color: var(--text);
+    margin-top: 2em;
+    margin-bottom: 0.6em;
+    scroll-margin-top: 5rem;
+  }
+
+  .reading h1 {
+    font-size: 1.9em;
+    letter-spacing: -0.02em;
+  }
+  .reading h2 {
+    font-size: 1.45em;
+  }
+  .reading h3 {
+    font-size: 1.2em;
+  }
+  .reading h4 {
+    font-size: 1.05em;
+  }
+  .reading h5,
+  .reading h6 {
+    font-size: 0.95em;
+    color: var(--text-secondary);
+  }
+
+  /* A hairline under the top two levels gives the document rhythm without
+     the heavy rules a docs site would use. */
+  .reading h1,
+  .reading h2 {
+    padding-bottom: 0.3em;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .reading p,
+  .reading ul,
+  .reading ol,
+  .reading blockquote,
+  .reading pre,
+  .reading dl {
+    margin-top: 0;
+    margin-bottom: 1.15em;
+  }
+
+  .reading ul,
+  .reading ol {
+    padding-left: 1.4em;
+  }
+  .reading ul {
+    list-style: disc;
+  }
+  .reading ol {
+    list-style: decimal;
+  }
+  .reading li {
+    margin-bottom: 0.4em;
+    padding-left: 0.2em;
+  }
+  .reading li::marker {
+    color: var(--text-faint);
+  }
+  .reading li > ul,
+  .reading li > ol {
+    margin-top: 0.4em;
+    margin-bottom: 0.4em;
+  }
+
+  .reading a {
+    color: var(--accent);
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 2.5px;
+    text-decoration-color: var(--accent-border);
+    transition: text-decoration-color 0.15s ease;
+  }
+  .reading a:hover {
+    text-decoration-color: var(--accent);
+  }
+
+  .reading strong {
+    font-weight: 650;
+  }
+
+  .reading code {
+    font-family: var(--font-mono);
+    font-size: 0.85em;
+    background-color: var(--surface-sunken);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 0.1em 0.35em;
+  }
+
+  .reading pre {
+    background-color: var(--surface-sunken);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-control);
+    padding: 1rem 1.15rem;
+    overflow-x: auto;
+    font-size: 0.9em;
+  }
+  .reading pre code {
+    background: none;
+    border: none;
+    padding: 0;
+    font-size: 0.8125rem;
+    line-height: 1.65;
+  }
+
+  .reading blockquote {
+    border-left: 2px solid var(--accent-border);
+    padding-left: 1.1em;
+    color: var(--text-secondary);
+    font-style: italic;
+  }
+
+  /* Wide tables scroll inside their own box; the page itself never does. */
+  .reading .table-scroll {
+    overflow-x: auto;
+    margin-bottom: 1.15em;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-control);
+    background: var(--surface);
+  }
+  .reading table {
+    border-collapse: collapse;
+    width: 100%;
+    font-family: var(--font-sans);
+    font-size: 0.875rem;
+    line-height: 1.5;
+    margin: 0;
+  }
+  .reading th,
+  .reading td {
+    border-bottom: 1px solid var(--border);
+    padding: 0.6em 0.85em;
+    text-align: left;
+    vertical-align: top;
+  }
+  .reading tr:last-child td {
+    border-bottom: none;
+  }
+  .reading th {
+    background-color: var(--surface-sunken);
+    font-weight: 600;
+    color: var(--text-secondary);
+    font-size: 0.8125rem;
+    letter-spacing: 0.01em;
+    white-space: nowrap;
+  }
+
+  .reading hr {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 2.25em 0;
+  }
+
+  .reading img {
+    max-width: 100%;
+    height: auto;
+    border-radius: var(--radius-control);
+  }
+
+  /* Compact variant for the narrow mobile pane. */
+  .reading-compact {
+    font-size: 1rem;
+    line-height: 1.7;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+  .text-pretty {
+    text-wrap: pretty;
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+  }
+
+  /* A soft warm wash used behind the hero. Deliberately low-contrast: it
+     should register as light, not as a gradient. */
+  .aurora {
+    background-image:
+      radial-gradient(
+        ellipse 70% 55% at 50% -10%,
+        color-mix(in srgb, var(--accent) 11%, transparent),
+        transparent 70%
+      ),
+      radial-gradient(
+        ellipse 50% 40% at 88% 8%,
+        color-mix(in srgb, var(--accent) 6%, transparent),
+        transparent 70%
+      );
+  }
+
+  @keyframes rise {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  .animate-rise {
+    animation: rise 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 0.35; }
+    50% { opacity: 1; }
+  }
+
+  @keyframes pulse-ring {
+    0% {
+      transform: scale(1);
+      opacity: 0.5;
+    }
+    70% {
+      transform: scale(1.35);
+      opacity: 0;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+  .animate-pulse-ring {
+    animation: pulse-ring 1.8s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+  }
+}

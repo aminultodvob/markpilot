@@ -1,0 +1,291 @@
+{
+  "$comment": "Single source of truth for supported input formats. Consumed by the Python converter service (app/conversion/registry.py) and the Next.js web app (lib/formats.ts). Signature entries are byte-prefix checks; ALL entries listed for a format must match. An empty signature list means the format is text-based and must be validated by parsing instead. NOTE: .doc and .ppt are deliberately absent. markitdown 0.1.7 provides XlsConverter for legacy .xls but has no converter for legacy binary Word or PowerPoint, so they are rejected up front with a helpful message (see app/security/detection.py) rather than failing after upload.",
+  "categories": [
+    {
+      "id": "documents",
+      "label": "Documents",
+      "description": "Word processors, presentations and spreadsheets"
+    },
+    {
+      "id": "data",
+      "label": "Data",
+      "description": "Structured and tabular data files"
+    },
+    {
+      "id": "web",
+      "label": "Web",
+      "description": "Markup and hypertext"
+    },
+    {
+      "id": "technical",
+      "label": "Technical",
+      "description": "Developer and research formats"
+    },
+    {
+      "id": "images",
+      "label": "Images",
+      "description": "Raster images, read with OCR"
+    },
+    {
+      "id": "archives",
+      "label": "Archives",
+      "description": "Bundles converted file-by-file"
+    }
+  ],
+  "formats": [
+    {
+      "extension": ".pdf",
+      "label": "PDF",
+      "category": "documents",
+      "icon": "file-text",
+      "mimeTypes": [
+        "application/pdf",
+        "application/x-pdf"
+      ],
+      "signatures": [
+        {
+          "offset": 0,
+          "hex": "25504446"
+        }
+      ],
+      "ocrCapable": true
+    },
+    {
+      "extension": ".docx",
+      "label": "Word",
+      "category": "documents",
+      "icon": "file-type",
+      "mimeTypes": [
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+      ],
+      "signatures": [
+        {
+          "offset": 0,
+          "hex": "504b0304"
+        }
+      ],
+      "ocrCapable": false
+    },
+    {
+      "extension": ".pptx",
+      "label": "PowerPoint",
+      "category": "documents",
+      "icon": "presentation",
+      "mimeTypes": [
+        "application/vnd.openxmlformats-officedocument.presentationml.presentation"
+      ],
+      "signatures": [
+        {
+          "offset": 0,
+          "hex": "504b0304"
+        }
+      ],
+      "ocrCapable": false
+    },
+    {
+      "extension": ".xlsx",
+      "label": "Excel",
+      "category": "documents",
+      "icon": "table",
+      "mimeTypes": [
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+      ],
+      "signatures": [
+        {
+          "offset": 0,
+          "hex": "504b0304"
+        }
+      ],
+      "ocrCapable": false
+    },
+    {
+      "extension": ".xls",
+      "label": "Excel (legacy)",
+      "category": "documents",
+      "icon": "table",
+      "mimeTypes": [
+        "application/vnd.ms-excel"
+      ],
+      "signatures": [
+        {
+          "offset": 0,
+          "hex": "d0cf11e0a1b11ae1"
+        }
+      ],
+      "ocrCapable": false
+    },
+    {
+      "extension": ".csv",
+      "label": "CSV",
+      "category": "data",
+      "icon": "table",
+      "mimeTypes": [
+        "text/csv",
+        "application/csv"
+      ],
+      "signatures": [],
+      "ocrCapable": false
+    },
+    {
+      "extension": ".json",
+      "label": "JSON",
+      "category": "data",
+      "icon": "braces",
+      "mimeTypes": [
+        "application/json",
+        "text/json"
+      ],
+      "signatures": [],
+      "ocrCapable": false
+    },
+    {
+      "extension": ".xml",
+      "label": "XML",
+      "category": "data",
+      "icon": "code",
+      "mimeTypes": [
+        "application/xml",
+        "text/xml"
+      ],
+      "signatures": [],
+      "ocrCapable": false
+    },
+    {
+      "extension": ".html",
+      "label": "HTML",
+      "category": "web",
+      "icon": "globe",
+      "mimeTypes": [
+        "text/html",
+        "application/xhtml+xml"
+      ],
+      "signatures": [],
+      "ocrCapable": false
+    },
+    {
+      "extension": ".htm",
+      "label": "HTML",
+      "category": "web",
+      "icon": "globe",
+      "mimeTypes": [
+        "text/html",
+        "application/xhtml+xml"
+      ],
+      "signatures": [],
+      "ocrCapable": false
+    },
+    {
+      "extension": ".ipynb",
+      "label": "Jupyter Notebook",
+      "category": "technical",
+      "icon": "notebook",
+      "mimeTypes": [
+        "application/x-ipynb+json",
+        "application/json"
+      ],
+      "signatures": [],
+      "ocrCapable": false
+    },
+    {
+      "extension": ".epub",
+      "label": "EPUB",
+      "category": "technical",
+      "icon": "book-open",
+      "mimeTypes": [
+        "application/epub+zip"
+      ],
+      "signatures": [
+        {
+          "offset": 0,
+          "hex": "504b0304"
+        }
+      ],
+      "ocrCapable": false
+    },
+    {
+      "extension": ".png",
+      "label": "PNG",
+      "category": "images",
+      "icon": "image",
+      "mimeTypes": [
+        "image/png"
+      ],
+      "signatures": [
+        {
+          "offset": 0,
+          "hex": "89504e470d0a1a0a"
+        }
+      ],
+      "ocrCapable": true
+    },
+    {
+      "extension": ".jpg",
+      "label": "JPEG",
+      "category": "images",
+      "icon": "image",
+      "mimeTypes": [
+        "image/jpeg"
+      ],
+      "signatures": [
+        {
+          "offset": 0,
+          "hex": "ffd8ff"
+        }
+      ],
+      "ocrCapable": true
+    },
+    {
+      "extension": ".jpeg",
+      "label": "JPEG",
+      "category": "images",
+      "icon": "image",
+      "mimeTypes": [
+        "image/jpeg"
+      ],
+      "signatures": [
+        {
+          "offset": 0,
+          "hex": "ffd8ff"
+        }
+      ],
+      "ocrCapable": true
+    },
+    {
+      "extension": ".webp",
+      "label": "WebP",
+      "category": "images",
+      "icon": "image",
+      "mimeTypes": [
+        "image/webp"
+      ],
+      "signatures": [
+        {
+          "offset": 0,
+          "hex": "52494646"
+        },
+        {
+          "offset": 8,
+          "hex": "57454250"
+        }
+      ],
+      "ocrCapable": true
+    },
+    {
+      "extension": ".zip",
+      "label": "ZIP archive",
+      "category": "archives",
+      "icon": "folder-archive",
+      "mimeTypes": [
+        "application/zip",
+        "application/x-zip-compressed"
+      ],
+      "signatures": [
+        {
+          "offset": 0,
+          "hex": "504b0304"
+        }
+      ],
+      "ocrCapable": false
+    }
+  ]
+}

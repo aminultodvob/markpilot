@@ -1,0 +1,123 @@
+# MarkPilot.
+#
+#   Internet
+#      |
+#      v
+#   web (Next.js, port 3000 published)
+#      |  internal network only
+#      v
+#   converter (FastAPI, no published port)
+#
+# The converter deliberately publishes no port. It is reachable only from the
+# web container over the internal bridge, so the conversion API - which accepts
+# file uploads - is never exposed directly to the internet.
+
+services:
+  converter:
+    build:
+      context: .
+      dockerfile: docker/converter.Dockerfile
+    image: markpilot/converter:1.0.0
+    restart: unless-stopped
+    expose:
+      - "8000"
+    networks:
+      - internal
+    environment:
+      APP_ENV: production
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      WORKSPACE_ROOT: /var/tmp/markpilot
+      # The browser never calls this service directly; the web app proxies.
+      CORS_ORIGINS: ""
+      TRUST_PROXY_HEADERS: "false"
+
+      MAX_FILE_SIZE_MB: ${MAX_FILE_SIZE_MB:-50}
+      MAX_TOTAL_UPLOAD_MB: ${MAX_TOTAL_UPLOAD_MB:-200}
+      MAX_FILES_PER_JOB: ${MAX_FILES_PER_JOB:-20}
+
+      MAX_ARCHIVE_SIZE_MB: ${MAX_ARCHIVE_SIZE_MB:-100}
+      MAX_ARCHIVE_FILES: ${MAX_ARCHIVE_FILES:-100}
+      MAX_ARCHIVE_UNCOMPRESSED_MB: ${MAX_ARCHIVE_UNCOMPRESSED_MB:-400}
+
+      SESSION_TTL_MINUTES: ${SESSION_TTL_MINUTES:-30}
+      CLEANUP_INTERVAL_SECONDS: ${CLEANUP_INTERVAL_SECONDS:-120}
+      MAX_CONVERSION_TIME_SECONDS: ${MAX_CONVERSION_TIME_SECONDS:-300}
+      MAX_CONCURRENT_CONVERSIONS: ${MAX_CONCURRENT_CONVERSIONS:-4}
+
+      OCR_ENABLED: ${OCR_ENABLED:-true}
+      OCR_LANGUAGES: ${OCR_LANGUAGES:-eng+ben}
+      OCR_DPI: ${OCR_DPI:-300}
+      OCR_MAX_PAGES: ${OCR_MAX_PAGES:-100}
+
+      RATE_LIMIT_ENABLED: ${RATE_LIMIT_ENABLED:-true}
+      RATE_LIMIT_JOBS_PER_HOUR: ${RATE_LIMIT_JOBS_PER_HOUR:-40}
+      RATE_LIMIT_UPLOADS_MB_PER_HOUR: ${RATE_LIMIT_UPLOADS_MB_PER_HOUR:-500}
+
+      # Optional vision OCR. Off unless all three are supplied; the key stays
+      # server-side and is never sent to the browser.
+      VISION_OCR_ENABLED: ${VISION_OCR_ENABLED:-false}
+      VISION_API_BASE_URL: ${VISION_API_BASE_URL:-}
+      VISION_API_KEY: ${VISION_API_KEY:-}
+      VISION_MODEL: ${VISION_MODEL:-}
+
+    tmpfs:
+      # Uploads live in RAM and vanish with the container. `noexec` and `nosuid`
+      # mean an uploaded file could not be executed even if something tried.
+      - /var/tmp/markpilot:rw,noexec,nosuid,size=2g
+
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+    deploy:
+      resources:
+        limits:
+          # OCR is CPU-bound; these bound a single container's blast radius.
+          cpus: "2.0"
+          memory: 2g
+
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  web:
+    build:
+      context: .
+      dockerfile: docker/web.Dockerfile
+    image: markpilot/web:1.0.0
+    restart: unless-stopped
+    ports:
+      - "${WEB_PORT:-3000}:3000"
+    networks:
+      - internal
+    environment:
+      NODE_ENV: production
+      # Service name on the internal network, not a public address.
+      CONVERTER_API_URL: http://converter:8000
+      NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-http://localhost:3000}
+    depends_on:
+      converter:
+        condition: service_healthy
+
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512m
+
+networks:
+  internal:
+    driver: bridge
