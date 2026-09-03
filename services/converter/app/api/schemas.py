@@ -109,9 +109,19 @@ class HealthResponse(BaseModel):
     version: str
 
 
+class CorsStatus(BaseModel):
+    """The effective cross-origin config, so a browser 'can't reach' failure is
+    diagnosable without shell access."""
+
+    allowed_origins: list[str]
+    origin_regex: str | None
+    configured: bool
+
+
 class ReadyResponse(BaseModel):
     status: str
     engine: str
     ocr: OcrStatus
+    cors: CorsStatus
     workspace_writable: bool
     active_sessions: int

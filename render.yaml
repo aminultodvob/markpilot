@@ -35,15 +35,20 @@ services:
         value: INFO
 
       # --- Who may call this service -------------------------------------
-      # Set CORS_ORIGINS to your production web domain. Render cannot know it
-      # at blueprint time, so it is left for you to fill in.
-      - key: CORS_ORIGINS
-        sync: false
-      # Allows Vercel's generated preview domains. Anchored at both ends so it
-      # cannot match an attacker-controlled host such as
-      # "https://markpilot-x.vercel.app.evil.com".
+      # CORS is what lets the browser call this service directly. Without it,
+      # every request is blocked by the browser before it reaches the app, and
+      # the UI shows "We couldn't reach the converter" with nothing in the logs.
+      #
+      # The regex below already covers your production domain AND every Vercel
+      # preview domain (markpilot-*.vercel.app), anchored at both ends so it
+      # cannot match a look-alike like "…vercel.app.attacker.com". For most
+      # setups this single value is all you need.
       - key: CORS_ORIGIN_REGEX
-        value: ^https://markpilot-[a-z0-9-]+\.vercel\.app$
+        value: "^https://markpilot-[a-z0-9-]+\\.vercel\\.app$"
+      # An explicit allow-list too, for a custom domain the regex won't cover.
+      # Comma-separated, scheme included, no trailing slash. Edit to taste.
+      - key: CORS_ORIGINS
+        value: https://markpilot-black.vercel.app
 
       # Render terminates TLS and sets X-Forwarded-For, so honouring it here
       # makes rate limiting per-client instead of per-proxy.

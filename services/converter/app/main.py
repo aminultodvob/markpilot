@@ -61,6 +61,7 @@ async def lifespan(app: FastAPI):
     )
 
     ocr = engine.ocr
+    cors_configured = bool(settings.cors_origin_list or settings.cors_origin_regex)
     logger.info(
         "converter service started",
         extra={
@@ -69,8 +70,18 @@ async def lifespan(app: FastAPI):
             "ocr_available": ocr.is_available(),
             "ocr_provider": ocr.provider.name if ocr.provider else None,
             "ocr_languages": ocr.available_languages(),
+            "cors_origins": settings.cors_origin_list,
+            "cors_origin_regex": settings.cors_origin_regex,
         },
     )
+    # A public converter with no allowed origins accepts no browser at all:
+    # every request is refused at the CORS preflight. Surface it loudly, since
+    # the browser-side symptom ("couldn't reach the converter") points nowhere.
+    if settings.app_env == "production" and not cors_configured:
+        logger.warning(
+            "no CORS origins configured: browsers will be blocked. Set "
+            "CORS_ORIGINS or CORS_ORIGIN_REGEX to your web app's origin.",
+        )
 
     try:
         yield

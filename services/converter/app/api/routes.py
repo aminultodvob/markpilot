@@ -24,6 +24,7 @@ from fastapi.responses import JSONResponse, StreamingResponse
 from app.api.deps import Services, client_address, get_services, require_session
 from app.api.schemas import (
     CategoryModel,
+    CorsStatus,
     DownloadAllRequest,
     ErrorBody,
     FileResult,
@@ -144,16 +145,22 @@ def ready(services: Services = Depends(get_services)) -> ReadyResponse:
         logger.warning("workspace is not writable")
 
     ocr = services.engine.ocr
+    settings = services.settings
     status = "ok" if workspace_writable else "degraded"
     return ReadyResponse(
         status=status,
         engine=f"markitdown {services.engine.engine_version}",
         ocr=OcrStatus(
-            enabled=services.settings.ocr_enabled,
+            enabled=settings.ocr_enabled,
             available=ocr.is_available(),
             active_provider=ocr.provider.name if ocr.provider else None,
             languages=ocr.available_languages(),
-            default_languages=services.settings.ocr_languages,
+            default_languages=settings.ocr_languages,
+        ),
+        cors=CorsStatus(
+            allowed_origins=settings.cors_origin_list,
+            origin_regex=settings.cors_origin_regex,
+            configured=bool(settings.cors_origin_list or settings.cors_origin_regex),
         ),
         workspace_writable=workspace_writable,
         active_sessions=services.sessions.active_session_count(),
