@@ -40,7 +40,7 @@ import {
   type MarkdownResult,
   type SessionCredentials,
 } from "@/lib/types";
-import { plural } from "@/lib/utils";
+import { cx, plural } from "@/lib/utils";
 
 const POLL_INTERVAL_MS = 700;
 const TERMINAL = new Set(["completed", "failed", "cancelled"]);
@@ -275,7 +275,16 @@ export function Converter() {
   const showWorkspace = job !== null;
 
   return (
-    <div className="space-y-4">
+    <div
+      className={cx(
+        // The upload state stays a calm, focused column; once there are
+        // results the workspace eases open to a full, spacious width. Both
+        // widths are rem-based so the max-width transition interpolates
+        // smoothly rather than snapping.
+        "mx-auto space-y-4 transition-[max-width] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]",
+        showWorkspace ? "max-w-[84rem]" : "max-w-2xl",
+      )}
+    >
       {/* Live region so status changes reach screen readers. */}
       <div aria-live="polite" className="sr-only">
         {busy

@@ -75,6 +75,10 @@ class Settings(BaseSettings):
     tesseract_cmd: str | None = None
     tessdata_prefix: str | None = None
     ocr_dpi: int = 300
+    # A whole extra Tesseract pass per page, only needed for rotated
+    # captures (a sideways phone photo). Scanned PDFs are upright, so this
+    # can be disabled on CPU-constrained hosts for a meaningful speed-up.
+    ocr_detect_orientation: bool = True
     ocr_max_pages: int = 100
     # A PDF page yielding fewer extractable characters than this is treated
     # as image-only and routed to OCR.

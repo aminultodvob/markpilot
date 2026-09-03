@@ -217,6 +217,34 @@ def test_multipage_scan_converts_every_page(engine, fixture, workdir, ocr_servic
     assert "Inventory Report" in result.markdown or "Widget" in result.markdown
 
 
+@pytest.mark.ocr
+def test_orientation_off_still_reads_an_upright_scan(fixture, workdir, settings):
+    """The free-tier speed path: skipping the orientation pass must not hurt
+    accuracy on upright documents (scanned PDFs, screenshots)."""
+    from dataclasses import replace as _replace  # noqa: F401
+
+    from app.config import Settings
+    from app.conversion.engine import ConversionEngine
+    from app.ocr.service import OcrService
+
+    fast = Settings(
+        workspace_root=settings.workspace_root,
+        rate_limit_enabled=False,
+        ocr_detect_orientation=False,
+        tesseract_cmd=settings.tesseract_cmd,
+        tessdata_prefix=settings.tessdata_prefix,
+    )
+    requires_ocr(OcrService(fast))
+    result = ConversionEngine(fast).convert(
+        fixture("ocr-english.png"),
+        filename="ocr-english.png",
+        options=ConversionOptions(),
+        workdir=workdir,
+    )
+    assert result.metadata.ocr_used is True
+    assert word_recall(result.markdown, ENGLISH_WORDS) >= 0.85
+
+
 def test_text_pdf_never_invokes_ocr(engine, fixture, workdir):
     """Running OCR on a real text layer would be slower and less accurate."""
     result = convert(engine, fixture("text.pdf"), "text.pdf", workdir)

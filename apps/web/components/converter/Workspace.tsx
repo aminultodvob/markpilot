@@ -107,7 +107,7 @@ export function Workspace({
 }: Props) {
   const [view, setView] = useState<View>("preview");
   const [mobilePane, setMobilePane] = useState<MobilePane>("files");
-  const [railWidth, setRailWidth] = useState(288);
+  const [railWidth, setRailWidth] = useState(300);
   const [railOpen, setRailOpen] = useState(true);
   const [expanded, setExpanded] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -582,7 +582,7 @@ export function Workspace({
 
       {/* Mobile: file list, with the document sliding up as a full sheet */}
       <div className="relative lg:hidden">
-        <div className="h-[68vh] min-h-[440px] overflow-y-auto">{fileRail}</div>
+        <div className="h-[72vh] min-h-[460px] overflow-y-auto">{fileRail}</div>
         {selectedId && mobilePane === "document" && (
           <div
             className="animate-doc-in absolute inset-0 z-10"
@@ -594,7 +594,7 @@ export function Workspace({
       </div>
 
       {/* Desktop: rail + document, split */}
-      <div ref={containerRef} className="hidden h-[74vh] min-h-[520px] lg:flex">
+      <div ref={containerRef} className="hidden h-[80vh] min-h-[560px] lg:flex">
         {railOpen && (
           <>
             <div
@@ -650,7 +650,10 @@ export function Workspace({
               onClick={() => setExpanded(false)}
               className="animate-fade-in absolute inset-0 cursor-default"
               style={{
-                background: "color-mix(in srgb, var(--bg) 55%, transparent)",
+                // A warm-dark scrim, fixed rather than theme-derived: it must
+                // darken the page in *light* mode too, so the document card
+                // reads as lifted above it in both themes.
+                background: "rgba(24, 18, 12, 0.5)",
                 backdropFilter: "blur(6px)",
                 WebkitBackdropFilter: "blur(6px)",
               }}

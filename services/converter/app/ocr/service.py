@@ -105,8 +105,18 @@ class OcrService:
         keep the plain one. The second pass only runs when the first went
         badly, so the common case still costs a single recognition.
         """
+        # Orientation detection is a whole extra Tesseract pass per page. It
+        # only matters for rotated captures (a phone photo held sideways);
+        # scanner and PDF output is upright, so on CPU-constrained hosts it can
+        # be switched off to roughly halve the Tesseract invocations per page.
+        def orient(img: Image.Image) -> Image.Image:
+            if not self._settings.ocr_detect_orientation:
+                return img
+            oriented, _rotation = provider.orient(img)
+            return oriented
+
         prepared, report = preprocess(image)
-        prepared, _rotation = provider.orient(prepared)
+        prepared = orient(prepared)
         words = provider.extract_words(prepared, languages=languages)
 
         if not report.steps:
@@ -119,7 +129,7 @@ class OcrService:
             return prepared, words
 
         baseline, _ = preprocess(image, enabled=False)
-        baseline, _rotation = provider.orient(baseline)
+        baseline = orient(baseline)
         baseline_words = provider.extract_words(baseline, languages=languages)
 
         if self._recognition_score(baseline_words) > self._recognition_score(words):

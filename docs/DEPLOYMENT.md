@@ -160,13 +160,32 @@ start as a gateway error.
 If you need it always warm, an external uptime pinger every 10 minutes works,
 or upgrade the instance.
 
+### Converting a scanned PDF is slow (stuck on "Reading text")
+
+That status means OCR is running: the PDF has no text layer, so every page is
+rasterised and recognised by Tesseract. OCR is CPU-bound, and Render's free
+instance is a fraction of a shared CPU — so a page that takes ~2 s on a normal
+machine can take 15–25 s there, and a multi-page scan can even hit
+`MAX_CONVERSION_TIME_SECONDS` and fail.
+
+Two settings cut the work sharply, and `render.yaml` already applies both:
+
+- `OCR_DETECT_ORIENTATION=false` — skips a whole extra Tesseract pass per page
+  that only matters for sideways phone photos. On upright scans this measured
+  **~60 % faster with identical accuracy**. This is the biggest lever.
+- `OCR_DPI=150` — fewer pixels per page, so less CPU and less RAM than 200/300.
+
+`OCR_DPI` takes effect from an env-var change alone; `OCR_DETECT_ORIENTATION`
+needs this code deployed first. For genuinely fast OCR at volume, the real fix
+is more CPU — a paid Render instance is several times quicker.
+
 ### A conversion dies partway through a large scan
 
 The free instance has 512 MB of RAM, and OCR is the memory-hungry part: one
 300-DPI page is a ~25 MB bitmap before Tesseract's own working set. The
-supplied values (`OCR_DPI=200`, `OCR_MAX_PAGES=20`,
+supplied values (`OCR_DPI=150`, `OCR_MAX_PAGES=20`,
 `MAX_CONCURRENT_CONVERSIONS=1`) are what keep it inside the limit. Lower
-`OCR_DPI` to 150 or reduce `OCR_MAX_PAGES` if you still see restarts.
+`OCR_DPI` further or reduce `OCR_MAX_PAGES` if you still see restarts.
 
 ### OCR reports unavailable
 

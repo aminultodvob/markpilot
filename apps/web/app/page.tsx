@@ -21,8 +21,11 @@ export default function HomePage() {
         className="aurora relative border-b"
         style={{ borderColor: "var(--border)" }}
       >
-        <div className="mx-auto max-w-3xl px-4 pt-14 pb-20 sm:px-6 sm:pt-20">
-          <div className="text-center">
+        {/* Wide outer container gives the results workspace room to breathe;
+            the hero copy is re-constrained to a comfortable reading width so
+            it stays centred and calm above it. */}
+        <div className="mx-auto max-w-[84rem] px-4 pt-14 pb-20 sm:px-6 sm:pt-20">
+          <div className="mx-auto max-w-2xl text-center">
             <span
               className="inline-flex items-center gap-2 rounded-[var(--radius-pill)] border px-3 py-1 text-[12px] font-medium"
               style={{
