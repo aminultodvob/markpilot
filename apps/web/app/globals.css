@@ -453,4 +453,51 @@
   .animate-pulse-ring {
     animation: pulse-ring 1.8s cubic-bezier(0.22, 1, 0.36, 1) infinite;
   }
+
+  /* --- Document reader transitions ------------------------------------- */
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  .animate-fade-in {
+    animation: fade-in 0.28s ease both;
+  }
+
+  /* A newly opened document eases up into place, so switching files reads as
+     a gentle turn of the page rather than a hard swap. */
+  @keyframes doc-in {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  .animate-doc-in {
+    animation: doc-in 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  /* The full-screen reader scales up a touch as it fades in - the same spring
+     the rest of the interface uses, so it feels like part of the page rather
+     than a modal dropped on top. */
+  @keyframes reader-in {
+    from {
+      opacity: 0;
+      transform: scale(0.985) translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  .animate-reader-in {
+    animation: reader-in 0.44s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
 }

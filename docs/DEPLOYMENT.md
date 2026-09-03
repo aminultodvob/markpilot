@@ -54,7 +54,7 @@ Then set the environment variables from
 not optional:
 
 ```
-CORS_ORIGINS=https://your-app.vercel.app
+CORS_ORIGINS=https://markpilot.replyot.com
 ```
 
 Without your web app's exact origin there, the browser's request is blocked
@@ -92,7 +92,7 @@ Environment variables — set all three for Production, Preview and Development:
 
 ```
 NEXT_PUBLIC_CONVERTER_URL=https://your-service.onrender.com
-NEXT_PUBLIC_SITE_URL=https://your-app.vercel.app
+NEXT_PUBLIC_SITE_URL=https://markpilot.replyot.com
 CONVERTER_API_URL=https://your-service.onrender.com
 ```
 

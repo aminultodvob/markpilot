@@ -39,16 +39,17 @@ services:
       # every request is blocked by the browser before it reaches the app, and
       # the UI shows "We couldn't reach the converter" with nothing in the logs.
       #
-      # The regex below already covers your production domain AND every Vercel
-      # preview domain (markpilot-*.vercel.app), anchored at both ends so it
-      # cannot match a look-alike like "…vercel.app.attacker.com". For most
-      # setups this single value is all you need.
+      # The custom production domain, plus the old Vercel URL (still valid while
+      # Vercel serves it). Comma-separated, scheme included, and NEVER a
+      # trailing slash: a browser's Origin header is scheme+host only, so
+      # "https://markpilot.replyot.com/" would silently never match.
+      - key: CORS_ORIGINS
+        value: https://markpilot.replyot.com,https://markpilot-black.vercel.app
+      # The regex additionally covers every Vercel preview deployment
+      # (markpilot-*.vercel.app), anchored at both ends so it cannot match a
+      # look-alike like "…vercel.app.attacker.com".
       - key: CORS_ORIGIN_REGEX
         value: "^https://markpilot-[a-z0-9-]+\\.vercel\\.app$"
-      # An explicit allow-list too, for a custom domain the regex won't cover.
-      # Comma-separated, scheme included, no trailing slash. Edit to taste.
-      - key: CORS_ORIGINS
-        value: https://markpilot-black.vercel.app
 
       # Render terminates TLS and sets X-Forwarded-For, so honouring it here
       # makes rate limiting per-client instead of per-proxy.
