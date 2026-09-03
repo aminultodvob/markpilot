@@ -1,0 +1,110 @@
+# Render blueprint for the MarkPilot converter service.
+#
+# Apply it from the Render dashboard: New → Blueprint → pick this repo.
+# Everything below is the free plan, tuned for its real constraints:
+#
+#   * 512 MB RAM and a fraction of a CPU. OCR is the expensive part, so DPI,
+#     page count and concurrency are all dialled down from the defaults. At
+#     300 DPI a single page is a ~25 MB bitmap and Tesseract needs headroom
+#     on top of that, which is enough to be OOM-killed here.
+#   * The service is suspended after ~15 minutes idle and cold-starts on the
+#     next request, taking roughly 35 seconds. The web app pings /health on
+#     load so that wait overlaps with choosing a file.
+#   * No persistent disk, which suits this service exactly: uploads belong in
+#     a temporary directory and results are held in memory.
+#
+# CORS_ORIGIN_REGEX is the one value you must review. It is what allows the
+# browser to call this service directly, which is necessary because a managed
+# Next host caps a serverless function's request body at 4.5 MB.
+
+services:
+  - type: web
+    name: markpilot-converter
+    runtime: docker
+    dockerfilePath: ./docker/converter.Dockerfile
+    dockerContext: .
+    plan: free
+    region: oregon
+    healthCheckPath: /health
+    autoDeployTrigger: commit
+
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: LOG_LEVEL
+        value: INFO
+
+      # --- Who may call this service -------------------------------------
+      # Set CORS_ORIGINS to your production web domain. Render cannot know it
+      # at blueprint time, so it is left for you to fill in.
+      - key: CORS_ORIGINS
+        sync: false
+      # Allows Vercel's generated preview domains. Anchored at both ends so it
+      # cannot match an attacker-controlled host such as
+      # "https://markpilot-x.vercel.app.evil.com".
+      - key: CORS_ORIGIN_REGEX
+        value: ^https://markpilot-[a-z0-9-]+\.vercel\.app$
+
+      # Render terminates TLS and sets X-Forwarded-For, so honouring it here
+      # makes rate limiting per-client instead of per-proxy.
+      - key: TRUST_PROXY_HEADERS
+        value: "true"
+
+      # --- Upload limits, sized for 512 MB --------------------------------
+      - key: MAX_FILE_SIZE_MB
+        value: "15"
+      - key: MAX_TOTAL_UPLOAD_MB
+        value: "40"
+      - key: MAX_FILES_PER_JOB
+        value: "8"
+
+      - key: MAX_ARCHIVE_SIZE_MB
+        value: "20"
+      - key: MAX_ARCHIVE_FILES
+        value: "30"
+      - key: MAX_ARCHIVE_UNCOMPRESSED_MB
+        value: "80"
+
+      # --- Conversion ------------------------------------------------------
+      # One worker: two concurrent OCR jobs will exhaust the memory limit.
+      - key: MAX_CONCURRENT_CONVERSIONS
+        value: "1"
+      - key: MAX_CONVERSION_TIME_SECONDS
+        value: "120"
+      - key: MAX_OUTPUT_CHARACTERS
+        value: "1500000"
+
+      # --- Sessions --------------------------------------------------------
+      # Shorter than the default: results live in RAM on a 512 MB box.
+      - key: SESSION_TTL_MINUTES
+        value: "15"
+      - key: CLEANUP_INTERVAL_SECONDS
+        value: "60"
+      - key: WORKSPACE_ROOT
+        value: /var/tmp/markpilot
+
+      # --- OCR -------------------------------------------------------------
+      - key: OCR_ENABLED
+        value: "true"
+      - key: OCR_LANGUAGES
+        value: eng+ben
+      # 200 DPI still reads cleanly and roughly halves the bitmap versus 300.
+      - key: OCR_DPI
+        value: "200"
+      - key: OCR_MAX_PAGES
+        value: "20"
+
+      # --- Abuse protection ------------------------------------------------
+      # This service is publicly reachable in the direct-upload setup, so
+      # these are the real defence rather than a formality.
+      - key: RATE_LIMIT_ENABLED
+        value: "true"
+      - key: RATE_LIMIT_JOBS_PER_HOUR
+        value: "30"
+      - key: RATE_LIMIT_UPLOADS_MB_PER_HOUR
+        value: "150"
+
+      # Third-party MarkItDown plugins execute arbitrary code against
+      # untrusted uploads. Never enable this on a public deployment.
+      - key: MARKITDOWN_PLUGINS_ENABLED
+        value: "false"

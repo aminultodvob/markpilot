@@ -1,9 +1,20 @@
 /**
  * Client for the converter API.
  *
- * Requests go to this app's own `/api/converter/*` route, which proxies to the
- * converter service over the internal network. The converter is therefore
- * never exposed publicly, and its URL never reaches the browser.
+ * There are two transport modes, because the right one depends on where this
+ * is deployed:
+ *
+ * **Proxied (default).** Requests go to this app's own `/api/converter/*`
+ * route, which forwards to the converter over the internal network. The
+ * converter is never exposed publicly and its URL never reaches the browser.
+ * This is the mode to use for Docker and self-hosting.
+ *
+ * **Direct.** When `NEXT_PUBLIC_CONVERTER_URL` is set, the browser calls the
+ * converter itself. This exists because managed Next hosts cap the request
+ * body of a serverless function - on Vercel the limit is 4.5 MB - so a proxied
+ * upload of any real document fails there no matter how the app is written.
+ * Going direct trades the private backend for working uploads, which is why
+ * the converter enforces CORS and rate limiting.
  *
  * Session credentials live in memory for the life of the page. They are
  * deliberately not written to localStorage: a refresh starting a clean session
@@ -19,7 +30,16 @@ import type {
   SessionCredentials,
 } from "./types";
 
-const BASE = "/api/converter";
+/** Direct converter origin, or "" to go through this app's proxy. */
+const DIRECT_ORIGIN = (process.env.NEXT_PUBLIC_CONVERTER_URL ?? "").replace(
+  /\/+$/,
+  "",
+);
+
+const BASE = DIRECT_ORIGIN || "/api/converter";
+
+/** True when the browser talks to the converter without a proxy hop. */
+export const isDirectMode = Boolean(DIRECT_ORIGIN);
 
 export class ApiError extends Error {
   readonly code: string;
@@ -37,8 +57,26 @@ export class ApiError extends Error {
 
 const NETWORK_ERROR: ApiErrorBody = {
   code: "network_error",
-  message: "We couldn't reach the converter. Please check your connection.",
+  message:
+    "We couldn't reach the converter. It may still be starting up — please " +
+    "try again in a moment.",
 };
+
+/**
+ * Wake the converter without blocking anything.
+ *
+ * Free hosting tiers suspend an idle service and cold-start it on the next
+ * request, which can take half a minute. Pinging the cheap `/health` endpoint
+ * when the page loads means that wait happens while someone is still choosing
+ * a file, instead of appearing as a stalled conversion.
+ */
+export function warmUp(): void {
+  void fetch(`${BASE}/health`, { method: "GET", cache: "no-store" }).catch(
+    () => {
+      // Best effort: a failed warm-up changes nothing about the real request.
+    },
+  );
+}
 
 function authHeaders(session: SessionCredentials): HeadersInit {
   return {

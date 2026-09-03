@@ -31,6 +31,11 @@ class Settings(BaseSettings):
     # In production the browser talks to Next.js, which proxies to this
     # service over the internal network, so this stays tight.
     cors_origins: str = "http://localhost:3000"
+    # Managed hosts give every preview deployment a generated domain, which no
+    # fixed list can cover. A regex is the only workable way to allow them,
+    # so anchor it tightly - a loose pattern allows the whole internet.
+    # Example: ^https://markpilot-[a-z0-9-]+\.vercel\.app$
+    cors_origin_regex: str | None = None
 
     # --- Upload limits ---------------------------------------------------
     max_file_size_mb: int = 50

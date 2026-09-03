@@ -38,6 +38,15 @@ const FORWARD_RESPONSE_HEADERS = [
 export const dynamic = "force-dynamic";
 // Node runtime: streaming request bodies to an internal service.
 export const runtime = "nodejs";
+/*
+ * A converter on a free hosting tier is suspended when idle and cold-starts on
+ * the next request, which can take ~35s. The platform default of 10s would
+ * abort that as a gateway error, so this is raised to the maximum the plan
+ * allows. Note that managed hosts also cap the *request body* of a function
+ * (4.5 MB on Vercel), which no timeout can work around - see lib/api.ts for
+ * the direct-upload mode that exists for exactly that reason.
+ */
+export const maxDuration = 60;
 
 function isAllowed(path: string): boolean {
   return ALLOWED_PREFIXES.some((prefix) => path === prefix || path.startsWith(prefix));

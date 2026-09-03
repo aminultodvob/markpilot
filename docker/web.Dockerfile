@@ -21,8 +21,16 @@ COPY apps/web ./
 # The formats registry lives outside apps/web and is imported via @formats/*.
 COPY packages/formats ../../packages/formats
 
-ENV NEXT_TELEMETRY_DISABLED=1
+# Standalone output is what keeps node_modules out of the runtime image. It is
+# opt-in because the same config must NOT produce it on a managed Next host,
+# where per-route serverless functions are required instead.
+ENV NEXT_TELEMETRY_DISABLED=1 \
+    NEXT_OUTPUT_STANDALONE=true
 RUN npm run build
+
+# Fail the build loudly rather than shipping an image whose CMD cannot resolve.
+RUN test -f .next/standalone/apps/web/server.js \
+    || (echo "standalone output missing: is NEXT_OUTPUT_STANDALONE set?" && exit 1)
 
 # --- runtime ----------------------------------------------------------------
 FROM node:22-bookworm-slim AS runtime

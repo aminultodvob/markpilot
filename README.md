@@ -28,6 +28,7 @@ and Bengali — with no account, no setup, and no permanent file storage.
 - [Temporary files and cleanup](#temporary-files-and-cleanup)
 - [Testing](#testing)
 - [Docker and deployment](#docker-and-deployment)
+- [Free hosting (Render + Vercel)](#free-hosting-render--vercel)
 - [API reference](#api-reference)
 - [Licensing](#licensing)
 
@@ -513,6 +514,41 @@ docker compose up --build
 Behind a reverse proxy, terminate TLS there, forward to the `web` service, and
 set `NEXT_PUBLIC_SITE_URL` to the public origin. Set `TRUST_PROXY_HEADERS=true`
 **only** if the proxy overwrites `X-Forwarded-For`.
+
+The runtime image is built with `NEXT_OUTPUT_STANDALONE=true`, which is what
+keeps `node_modules` out of it. That flag must **not** be set on a managed Next
+host - see below.
+
+---
+
+## Free hosting (Render + Vercel)
+
+Render runs the converter (it needs Tesseract, so it must be a container) and
+Vercel runs the web app. Both fit in the free tiers.
+
+Two files exist for this:
+
+- **[`render.yaml`](render.yaml)** - a Render blueprint with the whole service
+  configured, tuned for the free plan's 512 MB and shared CPU.
+- **[`.env.production.example`](.env.production.example)** - every production
+  variable for both platforms, annotated with why each value is what it is.
+
+Full walkthrough and troubleshooting: **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)**.
+
+Two things about that setup are worth knowing before you start:
+
+**The browser uploads directly to Render.** A Vercel serverless function
+accepts a request body of at most 4.5 MB, and a proxied upload passes through
+one, so any real document fails. Setting `NEXT_PUBLIC_CONVERTER_URL` makes the
+client call the converter directly instead. The trade-off is a publicly
+reachable converter, which is why `CORS_ORIGINS` and the rate limits are
+load-bearing there rather than decorative. Self-hosted, leave that variable
+empty and the private proxy is used.
+
+**Never set `NEXT_OUTPUT_STANDALONE` on Vercel.** Standalone output replaces
+per-route serverless functions with one server bundle; the symptom is that
+static pages load normally while every API route returns 404. `next.config.ts`
+detects Vercel and refuses to enable it regardless.
 
 ---
 

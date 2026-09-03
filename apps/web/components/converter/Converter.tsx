@@ -30,6 +30,7 @@ import {
   fetchJob,
   fetchMarkdown,
   retryFile,
+  warmUp,
 } from "@/lib/api";
 import { isSupported } from "@/lib/formats";
 import {
@@ -63,6 +64,12 @@ export function Converter() {
   sessionRef.current = session;
 
   const busy = job !== null && !TERMINAL.has(job.status);
+
+  // Wake a suspended free-tier converter while the user is still choosing a
+  // file, so the cold start does not look like a stalled conversion.
+  useEffect(() => {
+    warmUp();
+  }, []);
 
   // Release the server-side session when the tab goes away, so temporary
   // files are freed immediately rather than waiting for the TTL sweep.
@@ -272,9 +279,9 @@ export function Converter() {
       {/* Live region so status changes reach screen readers. */}
       <div aria-live="polite" className="sr-only">
         {busy
-          ? `Converting. ${job?.completed_count ?? 0} of ${job?.file_count ?? 0} files done.`
+          ? `Converting. ${job?.completed_count ?? 0} of ${plural(job?.file_count ?? 0, "file")} done.`
           : job
-            ? `Conversion finished. ${job.completed_count} of ${job.file_count} files converted.`
+            ? `Conversion finished. ${job.completed_count} of ${plural(job.file_count, "file")} converted.`
             : ""}
       </div>
 
